@@ -1,29 +1,46 @@
 import React, { useState } from 'react'
 import PT from 'prop-types'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+
 
 const initialFormValues = {
   username: '',
   password: '',
 }
 export default function LoginForm(props) {
+  props.login
   const [values, setValues] = useState(initialFormValues)
-  // ✨ where are my props? Destructure them here
+  const navigate = useNavigate()
+  const [error, setError] = useState('')
+
+
 
   const onChange = evt => {
     const { id, value } = evt.target
     setValues({ ...values, [id]: value })
   }
 
-  const onSubmit = evt => {
+  const onSubmit = async (evt) => {
     evt.preventDefault()
-    // ✨ implement
+    setError('')
+    try{
+      const { data } = await axios.post(
+        'http://localhost:9000/api/login',
+          { ...values }
+      )
+      localStorage.setItem('token', data.token)
+      navigate('/articles')
+    } catch (err){
+      setError(
+      err?.response?.data?.message || 
+      console.log("Set up the Axios Error or hardcoded error")
+      )
+    }
   }
 
   const isDisabled = () => {
-    // ✨ implement
-    // Trimmed username must be >= 3, and
-    // trimmed password must be >= 8 for
-    // the button to become enabled
+    return values.username.trim().length < 3 || values.password.trim().length < 8;
   }
 
   return (

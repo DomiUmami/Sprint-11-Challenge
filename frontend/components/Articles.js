@@ -1,36 +1,71 @@
 import React, { useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
+import {  useNavigate, Routes, route } from 'react-router-dom'
 import PT from 'prop-types'
+import axios from 'axios'
 
-export default function Articles(props) {
-  // ✨ where are my props? Destructure them here
+export default function Articles(props){
+    props.articles,
+    props.getArticles,
+    props.deleteArticle,
+    props.setCurrentArticleId,
+    props.updateArticle
 
-  // ✨ implement conditional logic: if no token exists
-  // we should render a Navigate to login screen (React Router v.6)
+  const navigate = useNavigate()  
 
+  
+  
   useEffect(() => {
-    // ✨ grab the articles here, on first render only
-  })
+    const token = localStorage.getItem('token')
+    if (!token ) {
+      navigate('/')
+    }
+    
+    const fetchArticles = async () => {
+      try {
+        const { data } = await axios.get('http://localhost:9000/api/articles', { headers: { Authorization: token } })
+        props.getArticles(data)
+      } catch (error) {
+        localStorage.removeItem('token')
+        navigate('/')
+      }
+    }
+    fetchArticles()
+  }, [])
+
+
+  const handleEditClick = async (article) => {
+    props.setCurrentArticleId(article.article_id)
+  }
+
+  const handleDeleteClick = async (article_id) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.delete(`http://localhost:9000/api/articles/${article_id}`, { headers: { Authorization: token }});
+      props.deleteArticle(article_id, response.data)    
+    } catch (error) {
+      console.error('failed')
+    }
+  }
+
 
   return (
-    // ✨ fix the JSX: replace `Function.prototype` with actual functions
     // and use the articles prop to generate articles
     <div className="articles">
       <h2>Articles</h2>
       {
-        ![].length
+        !props.articles.length
           ? 'No articles yet'
-          : [].map(art => {
+          : props.articles.map(article => {
             return (
-              <div className="article" key={art.article_id}>
+              <div className="article" key={article.article_id}>
                 <div>
-                  <h3>{art.title}</h3>
-                  <p>{art.text}</p>
-                  <p>Topic: {art.topic}</p>
+                  <h3>{article.title}</h3>
+                  <p>{article.text}</p>
+                  <p>Topic: {article.topic}</p>
                 </div>
                 <div>
-                  <button disabled={true} onClick={Function.prototype}>Edit</button>
-                  <button disabled={true} onClick={Function.prototype}>Delete</button>
+                  <button onClick={() => handleEditClick(article)}>Edit</button>
+                  <button onClick={() => handleDeleteClick(article.article_id)}>Delete</button>
                 </div>
               </div>
             )
